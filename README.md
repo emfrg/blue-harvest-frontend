@@ -125,6 +125,15 @@ To also check reads against your running backend:
 npm run test:service
 ```
 
+If the backend uses a different address, apply the same `BACKEND_URL` setting
+to this command too. On macOS or Linux, for example:
+
+```sh
+BACKEND_URL=http://127.0.0.1:8001 npm run test:service
+```
+
+On Windows, the PowerShell setting above still applies in the same terminal.
+
 This checks users, applications, history and request details without submitting
 or deciding requests. Both test commands build the frontend and start their own
 server: port **3100** for `npm test`, **3101** for `npm run test:service`.
