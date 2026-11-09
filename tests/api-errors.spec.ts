@@ -1,6 +1,140 @@
 import { expect, test } from "./api-fixture"
 import { openApplication, signIn, signOut, submitRequest } from "./helpers"
 
+for (const { trigger, read } of [
+  { trigger: "Refresh", read: "requests" },
+  { trigger: "tab focus", read: "approved-discount" },
+]) {
+  /** Failed reads and retries preserve an unsent draft until recovery, navigation or sign-out. */
+  test(`${trigger} failure preserves the draft through retries`, async ({
+    page,
+    context,
+    api,
+  }) => {
+    await signIn(page)
+    await openApplication(page)
+    await page.getByRole("link", { name: "New request", exact: true }).click()
+    const discount = page.getByLabel("Requested discount", { exact: true })
+    const reason = page.getByLabel("Reason for the request", { exact: true })
+    await discount.fill("40")
+    await reason.fill("  Keep this draft.\nAnd its second line.  ")
+
+    let failing = true
+    let release: () => void = () => {}
+    const waiting = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    await context.route(`**/backend/applications/1/${read}`, async (route) => {
+      if (failing)
+        return route.fulfill({
+          status: 503,
+          json: { detail: "Temporary read failure" },
+        })
+      await waiting
+      return route.fallback()
+    })
+    if (trigger === "Refresh") {
+      await page.getByRole("button", { name: "Refresh", exact: true }).click()
+    } else {
+      await page.evaluate(() => window.dispatchEvent(new Event("focus")))
+    }
+    const error = page.getByRole("heading", {
+      name: "Could not load application",
+    })
+    const retry = page.getByRole("button", { name: "Try again", exact: true })
+    await expect(error).toBeVisible()
+    await expect(reason).toBeHidden()
+    await retry.click()
+    await expect(retry).toBeEnabled()
+    await expect(error).toBeVisible()
+    await expect(reason).toBeHidden()
+
+    failing = false
+    await retry.click()
+    await expect(retry).toBeDisabled()
+    await expect(error).toBeVisible()
+    await expect(reason).toBeHidden()
+    release()
+    await expect(reason).toBeVisible()
+    await expect(error).toHaveCount(0)
+    await expect(discount).toHaveValue("40")
+    await expect(reason).toHaveValue(
+      "  Keep this draft.\nAnd its second line.  "
+    )
+    await expect(reason).toBeEditable()
+    expect(api.calls.filter((call) => call.method === "POST")).toHaveLength(0)
+
+    if (trigger === "Refresh") {
+      await page.getByRole("link", { name: "Back to application" }).click()
+      await expect(page).toHaveURL(/\/applications\/1$/)
+    } else {
+      await signOut(page)
+      await signIn(page)
+      await openApplication(page)
+    }
+    await page.getByRole("link", { name: "New request", exact: true }).click()
+    await expect(discount).toHaveValue("")
+    await expect(reason).toHaveValue("")
+  })
+}
+
+/** A failed read after approval must not expose old decision buttons during recovery. */
+test("decision controls stay unavailable until failed reads recover", async ({
+  page,
+  context,
+  api,
+}) => {
+  api.requests.push({
+    ...api.requests[0],
+    id: 103,
+    status: "PENDING",
+    reviewer_id: null,
+    decided_at: null,
+  })
+  await signIn(page, 3)
+  await openApplication(page)
+  await page.getByRole("link", { name: "Review request 103" }).click()
+
+  let failing = true
+  let release: () => void = () => {}
+  const waiting = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await context.route("**/backend/applications/1/requests", async (route) => {
+    if (failing)
+      return route.fulfill({
+        status: 503,
+        json: { detail: "Temporary read failure" },
+      })
+    await waiting
+    return route.fallback()
+  })
+  await page.getByRole("button", { name: "Approve 25 bps" }).click()
+  const retry = page.getByRole("button", { name: "Try again", exact: true })
+  await expect(retry).toBeVisible()
+  await expect(
+    page.getByRole("button", { name: "Approve 25 bps" })
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("button", { name: "Decline request" })
+  ).toHaveCount(0)
+
+  failing = false
+  await retry.click()
+  await expect(retry).toBeDisabled()
+  await expect(
+    page.getByRole("button", { name: "Approve 25 bps" })
+  ).toHaveCount(0)
+  await expect(
+    page.getByRole("button", { name: "Decline request" })
+  ).toHaveCount(0)
+  release()
+  await expect(
+    page.getByRole("heading", { name: "Approved by User 3" })
+  ).toBeVisible()
+  expect(api.calls.filter((call) => call.method === "POST")).toHaveLength(1)
+})
+
 for (const status of [403, 409, 422]) {
   /** A confirmed API rejection preserves editable input and never reports a saved request. */
   test(`submission rejected with ${status} retains entered values`, async ({

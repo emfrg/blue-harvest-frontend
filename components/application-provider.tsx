@@ -49,7 +49,6 @@ export function ApplicationProvider({
       const controller = new AbortController()
       activeRead.current = controller
       setLoading(true)
-      setError(null)
       try {
         const [history, current] = await Promise.all([
           getHistory(applicationId, user.id, controller.signal),
@@ -59,6 +58,7 @@ export function ApplicationProvider({
         setRequests(history.requests)
         setApproval(current.approved_discount)
         setLoaded(true)
+        setError(null)
         return true
       } catch (failure) {
         if (!controller.signal.aborted)

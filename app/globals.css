@@ -10,12 +10,9 @@
   --ink: #172c3e;
   --muted: #5b6b79;
   --line: #dce3e8;
-  --paper: #fff;
   --bg: #f4f6f8;
   --blue: #1558bb;
-  --blue-soft: #ecf3ff;
   --green: #176345;
-  --amber: #855409;
   --radius: 10px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -145,9 +142,6 @@ button:hover:not(:disabled),
 .stack {
   display: grid;
   gap: 20px;
-}
-.spaced {
-  margin-top: 24px;
 }
 .app-header {
   background: #183249;
@@ -307,10 +301,6 @@ button:hover:not(:disabled),
 .badge.declined {
   background: #fbecee;
   color: #963f49;
-}
-.badge.neutral {
-  background: #edf0f4;
-  color: #485d72;
 }
 .table-wrap {
   overflow-x: auto;
@@ -669,16 +659,6 @@ textarea {
 }
 .application-list a:hover {
   background: #f2f5f8;
-}
-.loading-line {
-  height: 12px;
-  width: 65%;
-  background: #e4eaf0;
-  border-radius: 4px;
-  margin: 15px 0;
-}
-.loading-line.short {
-  width: 38%;
 }
 .sr-only {
   position: absolute;

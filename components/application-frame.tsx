@@ -45,7 +45,7 @@ export function ApplicationFrame({
             )}
         </div>
       </div>
-      {error ? (
+      {error && (
         <section className="card empty" role="alert">
           <h2>
             {error.status === 404
@@ -57,13 +57,14 @@ export function ApplicationFrame({
             Try again
           </Button>
         </section>
-      ) : !loaded ? (
+      )}
+      {!loaded && !error && (
         <p className="muted small" role="status">
           Loading application…
         </p>
-      ) : (
-        children
       )}
+      {/* Keep the page mounted so a failed read cannot erase its unsent form input. */}
+      {loaded && <div hidden={Boolean(error)}>{children}</div>}
     </>
   )
 }
