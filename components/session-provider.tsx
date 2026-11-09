@@ -32,7 +32,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState("")
   const activeRead = useRef<AbortController | null>(null)
 
-  /** Read current users before restoring a saved identity or showing the sign-in choices. */
+  /** Restore identity using the current backend role (UI-FR-01). */
   const restore = useCallback(async function restore() {
     activeRead.current?.abort()
     const controller = new AbortController()

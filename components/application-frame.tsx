@@ -63,7 +63,7 @@ export function ApplicationFrame({
           Loading application…
         </p>
       )}
-      {/* Keep the page mounted so a failed read cannot erase its unsent form input. */}
+      {/* Keep the page mounted to preserve unsent input after a failed read (UI-FR-09). */}
       {loaded && <div hidden={Boolean(error)}>{children}</div>}
     </>
   )

@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test"
 import { expect, test } from "./api-fixture"
 import { openApplication, signIn, signOut } from "./helpers"
 
-/** Direct working URLs and Back must not restore a signed-out user's records or actions. */
+/** UI-AC-02: Back and direct URLs cannot restore signed-out records or actions. */
 test("signed-out navigation and Back stay behind sign-in", async ({
   page,
   api,
