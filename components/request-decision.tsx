@@ -43,6 +43,7 @@ export function RequestDecision({
       await reload()
     } catch (error) {
       if (controller.signal.aborted) return
+      // Read the saved outcome before offering another decision. (UI-FR-11)
       const refreshed = await reload()
       if (controller.signal.aborted) return
       if (error instanceof ApiError && error.status === 0 && refreshed) {

@@ -1,7 +1,7 @@
 import { expect, test } from "./api-fixture"
 import { openApplication, signIn, signOut } from "./helpers"
 
-/** Choices and role controls come from the API, including IDs absent from the original seed. */
+/** UI-AC-01: API choices include users and applications absent from the seed. */
 test("lists use returned users, roles and application IDs with the required headers", async ({
   page,
   api,
@@ -49,7 +49,7 @@ test("lists use returned users, roles and application IDs with the required head
   ).toBe(true)
 })
 
-/** User discovery waits for the server and offers retry after a failed read. */
+/** UI-AC-08: Failed user discovery offers retry without fallback identities. */
 test("user loading and failed reads never show fallback choices", async ({
   page,
   context,
@@ -178,7 +178,7 @@ test("empty application list offers no application links", async ({
   await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0)
 })
 
-/** Reload resolves the current role, and a removed user must choose an identity again. */
+/** UI-AC-01, UI-AC-02: Reload picks up role changes and removed users. */
 test("session restoration uses current API users and roles", async ({
   page,
   api,
@@ -205,7 +205,7 @@ test("session restoration uses current API users and roles", async ({
   ).toBeNull()
 })
 
-/** Signing out refreshes user choices and prevents the old application read from replacing the new one. */
+/** UI-AC-07: A previous user's late read cannot replace the new user's choices. */
 test("sign-out reloads users and discards the previous identity's application read", async ({
   page,
   context,

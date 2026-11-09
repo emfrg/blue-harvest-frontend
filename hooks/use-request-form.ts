@@ -98,7 +98,7 @@ export function useRequestForm(applicationId: number, userId: number) {
     )
   }
 
-  /** Validate, send once and open the saved request; retries reuse the original body and key. */
+  /** Submit once; uncertain retries reuse original details (UI-FR-10). */
   async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (activeWrite.current || submitDisabled) return

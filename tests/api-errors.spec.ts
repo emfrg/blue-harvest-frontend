@@ -5,7 +5,7 @@ for (const { trigger, read } of [
   { trigger: "Refresh", read: "requests" },
   { trigger: "tab focus", read: "approved-discount" },
 ]) {
-  /** Failed reads and retries preserve an unsent draft until recovery, navigation or sign-out. */
+  /** UI-AC-09: Recovery preserves a draft; leaving or signing out clears it. */
   test(`${trigger} failure preserves the draft through retries`, async ({
     page,
     context,
@@ -136,7 +136,7 @@ test("decision controls stay unavailable until failed reads recover", async ({
 })
 
 for (const status of [403, 409, 422]) {
-  /** A confirmed API rejection preserves editable input and never reports a saved request. */
+  /** UI-AC-03: An API rejection preserves input without claiming success. */
   test(`submission rejected with ${status} retains entered values`, async ({
     page,
     context,
@@ -167,7 +167,7 @@ for (const status of [403, 409, 422]) {
   })
 }
 
-/** A lost success response survives reload and user changes, then reuses the exact original request. */
+/** UI-AC-10: Retry retains the original identity, key and body across sessions. */
 test("unconfirmed submission retries the original identity, key and body", async ({
   page,
   context,
@@ -244,7 +244,7 @@ test("unconfirmed submission retries the original identity, key and body", async
 })
 
 for (const outcome of ["PENDING", "APPROVED", "DECLINED"] as const) {
-  /** A lost response allows another decision only when the reloaded service status is still pending. */
+  /** UI-AC-11: After a lost response, only a saved pending status permits retry. */
   test(`lost decision response reloads saved ${outcome} status`, async ({
     page,
     context,
@@ -289,7 +289,7 @@ for (const outcome of ["PENDING", "APPROVED", "DECLINED"] as const) {
   })
 }
 
-/** A competing reviewer wins; the stale page explains the conflict and displays the saved outcome. */
+/** UI-AC-11: A competing decision replaces stale controls with the saved outcome. */
 test("decision conflict reloads the other reviewer's decision", async ({
   page,
   api,
@@ -322,7 +322,7 @@ test("decision conflict reloads the other reviewer's decision", async ({
   await expect(page.locator(".success-toast")).toHaveCount(0)
 })
 
-/** Repeated clicks while a write is outstanding send exactly one request. */
+/** UI-AC-07: Submission stays disabled while awaiting the API response. */
 test("submission stays disabled while awaiting the service", async ({
   page,
   context,

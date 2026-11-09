@@ -23,7 +23,7 @@ test("user selection, header navigation and role controls", async ({
   await expect(page).toHaveURL(/\/login$/)
 })
 
-/** Read the same API data from independent manager and reviewer tabs. */
+/** UI-AC-03, UI-AC-06: A submission and decision reach both independent tabs. */
 test("submit, review in another tab, and refresh the service outcome", async ({
   page,
   context,
@@ -63,7 +63,7 @@ test("submit, review in another tab, and refresh the service outcome", async ({
   ).toBeVisible()
 })
 
-/** A decline preserves the approval supplied by the API and permits a later submission. */
+/** UI-AC-04, UI-AC-05: Display the API's decision, approval and history. */
 test("decline preserves approval and records retain their history", async ({
   page,
 }) => {
@@ -150,7 +150,7 @@ test("empty history, missing application and unavailable service", async ({
   ).toBeVisible()
 })
 
-/** Reject invalid fields locally and retain their values without making a submission call. */
+/** UI-AC-03: Invalid input stays editable and never reaches the submission API. */
 test("form validation keeps entered details", async ({ page, api }) => {
   await signIn(page)
   await openApplication(page)
@@ -177,7 +177,7 @@ test("form validation keeps entered details", async ({ page, api }) => {
   expect(api.calls.filter((call) => call.method === "POST")).toHaveLength(0)
 })
 
-/** Successful Refresh is brief, dismissible and does not move the application content. */
+/** UI-AC-12: Refresh feedback expires, can be dismissed and leaves content still. */
 test("refresh toast expires and can be dismissed", async ({ page }) => {
   await page.clock.install()
   await signIn(page)

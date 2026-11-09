@@ -1,14 +1,31 @@
 # Mortgage pricing exceptions — frontend
 
-A browser interface for requesting and reviewing discounts on mortgage interest
-rates. Relationship managers submit requests; reviewers approve or decline them.
-Both roles can inspect request history and the current approved discount.
+This repository contains the optional frontend for the
+[Mortgage pricing exceptions project](https://github.com/emfrg/blue-harvest-assignment),
+developed for the Blue Harvest Agentic SDLC Engineering Assignment.
 
-The frontend uses Next.js and TypeScript. The separate
-[backend API](https://github.com/emfrg/blue-harvest-assignment) provides the users,
-applications and saved records. The agreed behaviour is in [SPEC.md](SPEC.md);
-the HTTP contract is in the backend's
-[API.md](https://github.com/emfrg/blue-harvest-assignment/blob/main/API.md).
+**Start with the [main repository](https://github.com/emfrg/blue-harvest-assignment)**
+for the project overview, requirements and backend setup. It is the entry point
+for the assignment; this repository adds the frontend.
+
+Built with Next.js and TypeScript, it provides a browser interface for requesting
+and reviewing discounts on mortgage interest rates. Relationship managers submit
+requests; reviewers approve or decline them. Both roles can inspect request
+history and the current approved discount.
+
+The backend repository provides the HTTP API for submitting and deciding requests,
+enforces business rules and permissions, and stores the records. The frontend
+calls that API to perform these actions and retrieve users, applications, request
+history and approved discounts.
+
+The project uses spec-driven development. The documents cover separate concerns:
+
+- [Frontend specification (SPEC.md)](SPEC.md): UI requirements, interaction flows
+  and acceptance scenarios for this repository.
+- [Backend specification (SPEC.md)](https://github.com/emfrg/blue-harvest-assignment/blob/main/SPEC.md):
+  business rules, roles and request lifecycle for the backend.
+- [API reference (API.md)](https://github.com/emfrg/blue-harvest-assignment/blob/main/API.md):
+  the HTTP contract, including endpoints, request and response fields, and errors.
 
 ## Before You Start
 
@@ -21,8 +38,6 @@ You need:
   including the database and sample-record setup. Keep it running in its own terminal.
   The frontend uses `http://127.0.0.1:8000` by default; you can change the address
   with `BACKEND_URL`, as shown below.
-
-The frontend does not need a Python environment or its own database.
 
 ## Run Locally
 
@@ -125,6 +140,15 @@ To also check reads against your running backend:
 npm run test:service
 ```
 
+If the backend uses a different address, apply the same `BACKEND_URL` setting
+to this command too. On macOS or Linux, for example:
+
+```sh
+BACKEND_URL=http://127.0.0.1:8001 npm run test:service
+```
+
+On Windows, the PowerShell setting above still applies in the same terminal.
+
 This checks users, applications, history and request details without submitting
 or deciding requests. Both test commands build the frontend and start their own
 server: port **3100** for `npm test`, **3101** for `npm run test:service`.
@@ -134,7 +158,7 @@ Keep those ports free and run the commands one at a time.
 
 | File or directory | Where to look |
 |---|---|
-| [SPEC.md](SPEC.md) | Requirements and acceptance scenarios. Start here when changing behaviour. |
+| [SPEC.md](SPEC.md) | Frontend requirements and acceptance scenarios. Start here when changing UI behaviour. |
 | [app/](app/) | Pages, layouts and styling. |
 | [components/](components/) | Screens, forms and shared interface components. |
 | [hooks/](hooks/) | Request-form state and submission handling. |

@@ -42,7 +42,7 @@ export function ApplicationProvider({
   const [notice, setNotice] = useState<{ title: string } | null>(null)
   const activeRead = useRef<AbortController | null>(null)
 
-  /** Replace displayed records only with complete, current service responses. */
+  /** Reload records while ignoring obsolete responses (UI-FR-08). */
   const reload = useCallback(
     async function reload() {
       activeRead.current?.abort()
@@ -79,7 +79,7 @@ export function ApplicationProvider({
     // Synchronize this screen with an external service on entry and when returning to the tab.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void reload()
-    /** Reload changes made by another user when returning to this tab. */
+    /** Reload other users' changes when returning to this tab (UI-FR-03). */
     function onFocus() {
       void reload()
     }
@@ -96,7 +96,7 @@ export function ApplicationProvider({
     return () => window.clearTimeout(timeout)
   }, [notice])
 
-  /** Start a fresh four-second notice for each confirmed successful action. */
+  /** Restart the four-second toast for each confirmed success (UI-FR-12). */
   function notify(title: string) {
     setNotice({ title })
   }
