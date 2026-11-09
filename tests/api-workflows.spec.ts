@@ -155,17 +155,25 @@ test("form validation keeps entered details", async ({ page, api }) => {
   await signIn(page)
   await openApplication(page)
   await page.getByRole("link", { name: "New request", exact: true }).click()
-  await page.getByLabel("Requested discount", { exact: true }).fill("1.5")
   await page
     .getByLabel("Reason for the request", { exact: true })
     .fill("Keep this reason.")
-  await page
-    .getByRole("button", { name: "Submit request", exact: true })
-    .click()
-  await expect(page.locator("#discount-error")).toBeVisible()
+  for (const value of ["", "0", "-1", "1.5"]) {
+    await page.getByLabel("Requested discount", { exact: true }).fill(value)
+    await page
+      .getByRole("button", { name: "Submit request", exact: true })
+      .click()
+    await expect(page.locator("#discount-error")).toBeVisible()
+  }
   await expect(
     page.getByLabel("Reason for the request", { exact: true })
   ).toHaveValue("Keep this reason.")
+  await page.getByLabel("Requested discount", { exact: true }).fill("25")
+  await page.getByLabel("Reason for the request", { exact: true }).fill("   ")
+  await page
+    .getByRole("button", { name: "Submit request", exact: true })
+    .click()
+  await expect(page.locator("#reason-error")).toBeVisible()
   expect(api.calls.filter((call) => call.method === "POST")).toHaveLength(0)
 })
 
@@ -184,7 +192,14 @@ test("refresh toast expires and can be dismissed", async ({ page }) => {
     "Records refreshed"
   )
   expect(await summary.boundingBox()).toEqual(before)
-  await page.clock.runFor(4100)
+  await page.clock.runFor(3000)
+  await page.getByRole("button", { name: "Refresh", exact: true }).click()
+  await expect(
+    page.getByRole("button", { name: "Refresh", exact: true })
+  ).toBeEnabled()
+  await page.clock.runFor(1500)
+  await expect(page.locator(".success-toast")).toBeVisible()
+  await page.clock.runFor(2600)
   await expect(page.locator(".success-toast")).toHaveCount(0)
   await page.getByRole("button", { name: "Refresh", exact: true }).click()
   await page.getByRole("button", { name: "Dismiss notification" }).click()

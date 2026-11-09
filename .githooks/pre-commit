@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+# Check the working tree without rewriting source files or starting browsers.
+exec npm run check

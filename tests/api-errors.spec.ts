@@ -243,35 +243,83 @@ test("unconfirmed submission retries the original identity, key and body", async
   expect(api.requests).toHaveLength(3)
 })
 
-/** Reconcile a response lost after a successful decision instead of offering another decision. */
-test("lost decision response reloads the saved status", async ({
+for (const outcome of ["PENDING", "APPROVED", "DECLINED"] as const) {
+  /** A lost response allows another decision only when the reloaded service status is still pending. */
+  test(`lost decision response reloads saved ${outcome} status`, async ({
+    page,
+    context,
+    api,
+  }) => {
+    await signIn(page, 2)
+    await openApplication(page)
+    await submitRequest(page)
+    await signOut(page)
+    await signIn(page, 3)
+    await openApplication(page)
+    await page.getByRole("link", { name: "Review request 103" }).click()
+    await context.route("**/backend/requests/103/decision", async (route) => {
+      if (outcome !== "PENDING")
+        Object.assign(api.requests[2], {
+          status: outcome,
+          reviewer_id: 3,
+          decided_at: "2026-11-08T20:31:00Z",
+        })
+      await route.abort()
+    })
+    await page.getByRole("button", { name: "Approve 40 bps" }).click()
+    await expect(page.getByRole("main").getByRole("alert")).toBeVisible()
+    if (outcome === "PENDING") {
+      await expect(
+        page.getByRole("button", { name: "Approve 40 bps" })
+      ).toBeEnabled()
+      await expect(
+        page.getByRole("button", { name: "Decline request" })
+      ).toBeEnabled()
+    } else {
+      await expect(
+        page.getByRole("heading", {
+          name: `${outcome === "APPROVED" ? "Approved" : "Declined"} by User 3`,
+        })
+      ).toBeVisible()
+      await expect(
+        page.getByRole("button", { name: "Decline request" })
+      ).toHaveCount(0)
+    }
+    await expect(page.locator(".success-toast")).toHaveCount(0)
+  })
+}
+
+/** A competing reviewer wins; the stale page explains the conflict and displays the saved outcome. */
+test("decision conflict reloads the other reviewer's decision", async ({
   page,
-  context,
   api,
 }) => {
-  await signIn(page, 2)
+  await signIn(page)
   await openApplication(page)
   await submitRequest(page)
   await signOut(page)
   await signIn(page, 3)
   await openApplication(page)
   await page.getByRole("link", { name: "Review request 103" }).click()
-  await context.route("**/backend/requests/103/decision", async (route) => {
-    Object.assign(api.requests[2], {
-      status: "APPROVED",
-      reviewer_id: 3,
-      decided_at: "2026-11-08T20:31:00Z",
-    })
-    await route.abort()
+  Object.assign(api.requests[2], {
+    status: "APPROVED",
+    reviewer_id: 4,
+    decided_at: "2026-11-09T10:00:00Z",
   })
-  await page.getByRole("button", { name: "Approve 40 bps" }).click()
+  await page.getByRole("button", { name: "Decline request" }).click()
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "Request already decided"
+  )
   await expect(
-    page.getByRole("heading", { name: "Approved by User 3" })
+    page.getByRole("heading", { name: "Approved by User 4" })
   ).toBeVisible()
   await expect(
     page.getByRole("button", { name: "Decline request" })
   ).toHaveCount(0)
-  await expect(page.getByRole("main").getByRole("alert")).toBeVisible()
+  await expect(
+    page.getByRole("region", { name: "Current approved discount" })
+  ).toContainText("40 bps")
+  await expect(page.locator(".success-toast")).toHaveCount(0)
 })
 
 /** Repeated clicks while a write is outstanding send exactly one request. */

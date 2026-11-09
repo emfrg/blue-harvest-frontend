@@ -10,10 +10,15 @@
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings=0",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
-    "test": "playwright test"
+    "typecheck": "next typegen && tsc --noEmit",
+    "check": "npm run typecheck && npm run lint",
+    "hooks:install": "git config --local core.hooksPath .githooks",
+    "pretest": "npm run build",
+    "test": "playwright test",
+    "pretest:service": "npm run build",
+    "test:service": "playwright test --config playwright.service.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

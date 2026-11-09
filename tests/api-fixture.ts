@@ -1,4 +1,4 @@
-import { test as base, expect } from "@playwright/test"
+import { test as base, expect } from "./browser-fixture"
 import type { DemoUser, DiscountRequest } from "../lib/api-types"
 
 export const initialRequests: DiscountRequest[] = [
@@ -65,8 +65,12 @@ export const test = base.extend<{ api: ApiFixture }>({
           expect(request.method()).toBe("GET")
           return route.fulfill({ json: api.applicationIds })
         }
-        if (request.method() === "GET") {
-          const id = Number(path.split("/")[2])
+        const applicationRead = path.match(
+          /^\/applications\/(\d+)\/(requests|approved-discount)$/
+        )
+        if (applicationRead) {
+          expect(request.method()).toBe("GET")
+          const id = Number(applicationRead[1])
           if (!api.applicationIds.includes(id))
             return route.fulfill({
               status: 404,
@@ -90,6 +94,7 @@ export const test = base.extend<{ api: ApiFixture }>({
           })
         }
         if (path === "/requests") {
+          expect(request.method()).toBe("POST")
           const body = request.postDataJSON()
           expect(Object.keys(body).sort()).toEqual([
             "application_id",
@@ -125,9 +130,18 @@ export const test = base.extend<{ api: ApiFixture }>({
           api.submissions.set(`${user}:${key}`, saved)
           return route.fulfill({ status: 201, json: saved })
         }
+        const decision = path.match(/^\/requests\/(\d+)\/decision$/)
+        if (!decision)
+          throw new Error(`Unexpected API route: ${request.method()} ${path}`)
+        expect(request.method()).toBe("POST")
         const saved = api.requests.find(
-          (item) => item.id === Number(path.split("/")[2])
-        )!
+          (item) => item.id === Number(decision[1])
+        )
+        if (!saved)
+          return route.fulfill({
+            status: 404,
+            json: { detail: "Request not found" },
+          })
         if (saved.status !== "PENDING")
           return route.fulfill({
             status: 409,
