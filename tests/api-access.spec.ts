@@ -77,7 +77,10 @@ test("keyboard submission and review at mobile width", async ({ page }) => {
   await page.keyboard.press("Enter")
   await page.getByRole("link", { name: "New request", exact: true }).focus()
   await page.keyboard.press("Enter")
-  await page.getByLabel("Requested discount", { exact: true }).focus()
+  const discount = page.getByLabel("Requested discount", { exact: true })
+  await expect(discount).toBeEditable()
+  await discount.focus()
+  await expect(discount).toBeFocused()
   await page.keyboard.type("25")
   await page.keyboard.press("Tab")
   await expect(
