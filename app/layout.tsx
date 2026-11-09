@@ -1,6 +1,10 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
+import { AppHeader } from "@/components/app-header"
+import { SessionProvider } from "@/components/session-provider"
+import { SessionGate } from "@/components/session-gate"
+
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -12,7 +16,14 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body>
+        <SessionProvider>
+          <AppHeader />
+          <main className="app-main">
+            <SessionGate>{children}</SessionGate>
+          </main>
+        </SessionProvider>
+      </body>
     </html>
   )
 }
