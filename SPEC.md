@@ -153,6 +153,7 @@ All IDs below refer to this specification.
 | UI-QR-03 | Request status must be communicated in text. | Identify each status without relying on colour. |
 | UI-QR-04 | Frontend code must be understandable in small pieces: each component or function has a clear purpose, named functions have short purpose comments, and validation, HTTP calls, submission state and page markup have explicit responsibilities. Prefer direct control flow over deeply nested conditions or general-purpose frameworks. | Review the submission and decision paths from user input to API response, using the local code guide to identify each responsibility. |
 | UI-QR-05 | Readability cleanup must preserve the agreed screens, styling, HTTP contract, identity handling, exact submission retries and success/error feedback. It must not add business rules, dependencies or backend changes. | Run strict TypeScript checking, lint, the production build and the existing browser workflow/error tests; compare changes against the functional requirements above. |
+| UI-QR-06 | Quality checks must be repeatable: fast lint/type checks before commits, browser workflow checks against a fresh build, and a separate check of the real API connection. Tests using prepared responses must reject undocumented endpoints and fail on unexpected browser exceptions. | Run the quality command and Chromium/WebKit suites; distinguish simulated API tests from real-service checks and record any remaining coverage gaps. |
 
 ## 6. Acceptance scenarios and behaviour checklist
 
@@ -190,6 +191,7 @@ All IDs below refer to this specification.
 
 ## 7. Delivery success criteria
 
+- A simple pre-commit hook runs TypeScript and ESLint without rewriting source files. Browser tests run separately and in CI; they use isolated test ports and never reuse an unrelated server. Real-service smoke checks are read-only. Automated submission/decision integration tests require a disposable backend database and must not use the author's working data.
 - The author personally verifies sign-in/sign-out and the five mortgage flows against the local service. Automated tests distinguish controlled HTTP responses from verification against the real API.
 - Acceptance and quality checks have recorded results, distinguishing assistant checks from author confirmation.
 - Focused retry and error-handling tests, strict TypeScript checking, linting and the build pass.
