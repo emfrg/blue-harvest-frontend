@@ -2,79 +2,12 @@
 
 import Link from "next/link"
 
-import { useDemo } from "@/components/demo-provider"
+import { useSignedInUser } from "@/components/session-provider"
+import { useApplication } from "@/components/application-provider"
 import { RequestBreadcrumb, RequestContext } from "@/components/request-context"
+import { RequestDecision } from "@/components/request-decision"
 import { RequestStatus } from "@/components/request-status"
-import { Button } from "@/components/ui/button"
-import {
-  currentApproval,
-  formatTimestamp,
-  type DiscountRequest,
-} from "@/lib/demo-data"
-
-/** Show the allowed reviewer actions or the request's saved local outcome. */
-function DecisionArea({
-  request,
-  approvalId,
-}: {
-  request: DiscountRequest
-  approvalId?: number
-}) {
-  const { user, decide } = useDemo()
-  if (request.status === "PENDING")
-    return (
-      <section className="decision-area">
-        {user.role === "Reviewer" ? (
-          <>
-            <h3>Your decision</h3>
-            <p>
-              Approval applies to these exact details. The decision is final.
-            </p>
-            <div className="row">
-              <Button
-                variant="primary"
-                onClick={() => decide(request.id, "APPROVED")}
-              >
-                {`Approve ${request.discount_bps} bps`}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => decide(request.id, "DECLINED")}
-              >
-                Decline request
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <h3>Waiting for a reviewer</h3>
-            <p>
-              This request has been submitted. Its discount and reason are saved
-              and cannot be edited.
-            </p>
-          </>
-        )}
-      </section>
-    )
-  const description =
-    request.status === "DECLINED"
-      ? "This request did not change the approved discount."
-      : approvalId === request.id
-        ? "This is the current approved discount."
-        : "A later approval now supplies the current discount."
-  return (
-    <section className="decision-area">
-      <h3>
-        {request.status === "APPROVED" ? "Approved" : "Declined"} by User{" "}
-        {request.reviewer_id}
-      </h3>
-      <p>
-        {request.decided_at && formatTimestamp(request.decided_at)}.{" "}
-        {description}
-      </p>
-    </section>
-  )
-}
+import { formatTimestamp } from "@/lib/format"
 
 /** Render the approved request page with all original fields and role-aware decisions. */
 export function RequestView({
@@ -84,12 +17,11 @@ export function RequestView({
   applicationId: number
   requestId: number
 }) {
-  const { requests, user } = useDemo()
-  const history = requests.filter(
-    (request) => request.application_id === applicationId
+  const user = useSignedInUser()
+  const { requests, approval } = useApplication()
+  const request = requests.find(
+    (item) => item.id === requestId && item.application_id === applicationId
   )
-  const request = history.find((item) => item.id === requestId)
-  const approval = currentApproval(history)
   if (!request)
     return (
       <section className="card empty" role="alert">
@@ -120,7 +52,7 @@ export function RequestView({
               <RequestStatus status={request.status} />
             </div>
             <h2>
-              {user.role === "Reviewer" && request.status === "PENDING"
+              {user.role === "REVIEWER" && request.status === "PENDING"
                 ? "Review discount request"
                 : "Discount request"}
             </h2>
@@ -169,7 +101,11 @@ export function RequestView({
               </dd>
             </div>
           </dl>
-          <DecisionArea request={request} approvalId={approval?.id} />
+          <RequestDecision
+            key={request.id}
+            request={request}
+            approvalId={approval?.request_id}
+          />
         </article>
         <RequestContext approval={approval} request={request} />
       </div>

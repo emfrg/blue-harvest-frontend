@@ -1,6 +1,7 @@
 import Link from "next/link"
 
-import { formatTimestamp, type DiscountRequest } from "@/lib/demo-data"
+import { formatTimestamp } from "@/lib/format"
+import type { DiscountRequest, ApprovedDiscount } from "@/lib/api-types"
 
 /** Give each focused task a breadcrumb back to its own application. */
 export function RequestBreadcrumb({
@@ -24,12 +25,12 @@ export function RequestBreadcrumb({
   )
 }
 
-/** Keep current approval and the request's two lifecycle events beside its details. */
+/** Show current approval and recorded request activity with the latest event first. */
 export function RequestContext({
   approval,
   request,
 }: {
-  approval?: DiscountRequest
+  approval: ApprovedDiscount | null
   request?: DiscountRequest
 }) {
   return (
@@ -42,43 +43,44 @@ export function RequestContext({
         <strong>{approval ? `${approval.discount_bps} bps` : "None"}</strong>
         <p>
           {approval
-            ? `From request #${approval.id}`
+            ? `From request #${approval.request_id}`
             : "No approved discount for this application."}
         </p>
-        {request?.status === "PENDING" && (
-          <p>This pending request does not change the approved discount.</p>
-        )}
       </section>
-      {request ? (
-        <section className="card context-card">
-          <h3>Request activity</h3>
+      {request && (
+        <section
+          className="card context-card"
+          aria-labelledby="request-activity-heading"
+        >
+          <h3 id="request-activity-heading">Request activity</h3>
           <ol className="activity">
-            <li>
-              <strong>Submitted by User {request.submitted_by}</strong>
-              <span>{formatTimestamp(request.submitted_at)}</span>
-            </li>
-            <li>
-              <strong>
-                {request.status === "PENDING"
-                  ? "Awaiting a decision"
-                  : `${request.status === "APPROVED" ? "Approved" : "Declined"} by User ${request.reviewer_id}`}
-              </strong>
-              <span>
-                {request.decided_at
-                  ? formatTimestamp(request.decided_at)
-                  : "Not yet decided"}
-              </span>
+            {request.status !== "PENDING" && request.decided_at && (
+              <li className="activity-latest">
+                <div className="activity-heading">
+                  <strong>
+                    {request.status === "APPROVED" ? "Approved" : "Declined"} by
+                    User {request.reviewer_id}
+                  </strong>
+                </div>
+                <time dateTime={request.decided_at}>
+                  {formatTimestamp(request.decided_at)}
+                </time>
+              </li>
+            )}
+            <li
+              className={
+                request.status === "PENDING" ? "activity-latest" : undefined
+              }
+            >
+              <div className="activity-heading">
+                <strong>Submitted by User {request.submitted_by}</strong>
+              </div>
+              <time dateTime={request.submitted_at}>
+                {formatTimestamp(request.submitted_at)}
+              </time>
             </li>
           </ol>
-        </section>
-      ) : (
-        <section className="context-card">
-          <h3>After you submit</h3>
-          <p>
-            A reviewer will approve or decline the exact discount and reason you
-            submit.
-          </p>
-          <p>The saved request will open so you can check its status.</p>
+          {request.status === "PENDING" && <p>Awaiting a decision</p>}
         </section>
       )}
     </aside>

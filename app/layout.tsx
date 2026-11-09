@@ -2,7 +2,8 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 
 import { AppHeader } from "@/components/app-header"
-import { DemoProvider } from "@/components/demo-provider"
+import { SessionProvider } from "@/components/session-provider"
+import { SessionGate } from "@/components/session-gate"
 
 import "./globals.css"
 
@@ -16,17 +17,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <DemoProvider>
+        <SessionProvider>
           <AppHeader />
           <main className="app-main">
-            {children}
-            <footer className="app-footer">
-              <span>
-                Fictional preview data · Actions only change this mockup
-              </span>
-            </footer>
+            <SessionGate>{children}</SessionGate>
           </main>
-        </DemoProvider>
+        </SessionProvider>
       </body>
     </html>
   )

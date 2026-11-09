@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-/** Open the approved default view of sample application 1. */
+/** Start at application lookup, with unsigned-in visits handled by the session guard. */
 export default function Page() {
-  redirect("/applications/1")
+  redirect("/applications")
 }

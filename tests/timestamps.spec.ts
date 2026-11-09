@@ -1,6 +1,7 @@
-import { expect, test } from "@playwright/test"
+import { expect, test } from "./api-fixture"
 
-import { formatTimestamp } from "../lib/demo-data"
+import { formatTimestamp } from "../lib/format"
+import { openApplication, signIn } from "./helpers"
 
 /** Keep the approved date labels stable, including midnight and UTC date changes. */
 test("timestamps use the fixed UTC display format", () => {
@@ -15,7 +16,7 @@ test("timestamps use the fixed UTC display format", () => {
 })
 
 /** Reproduce a browser whose Intl date punctuation differs from the Node server. */
-test("history and details hydrate even when browser date conventions differ", async ({
+test("history and details keep UTC formatting when browser date conventions differ", async ({
   page,
 }) => {
   const errors: string[] = []
@@ -39,21 +40,19 @@ test("history and details hydrate even when browser date conventions differ", as
     })
   })
 
-  await page.goto("/applications/1")
-  // An identity change confirms hydration and triggers another client render.
-  await page.getByLabel("Demo user").selectOption("3")
-  await expect(page.locator(".app-context")).toContainText("User 3 · Reviewer")
+  await signIn(page, 3)
+  await openApplication(page)
+  await expect(page.locator(".identity")).toContainText("User 3 · Reviewer")
   await expect(page.locator("tbody .secondary-column")).toHaveText([
-    "6 Nov 2026, 09:10 UTC",
     "7 Nov 2026, 11:20 UTC",
+    "6 Nov 2026, 09:10 UTC",
   ])
 
-  await page.goto("/applications/1/requests/101")
-  await page.getByLabel("Demo user").selectOption("3")
-  await expect(page.locator(".app-context")).toContainText("User 3 · Reviewer")
-  await expect(page.locator(".activity span")).toHaveText([
-    "6 Nov 2026, 09:10 UTC",
+  await page.getByRole("link", { name: "View request 101", exact: true }).click()
+  await expect(page.locator(".identity")).toContainText("User 3 · Reviewer")
+  await expect(page.locator(".activity time")).toHaveText([
     "6 Nov 2026, 10:25 UTC",
+    "6 Nov 2026, 09:10 UTC",
   ])
   await expect(page.locator(".facts")).toContainText("6 Nov 2026, 10:25 UTC")
   expect(errors).toEqual([])

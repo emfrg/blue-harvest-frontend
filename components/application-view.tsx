@@ -1,34 +1,22 @@
 "use client"
 
-import { ApprovalSummary, NextTask } from "@/components/application-summary"
-import { useDemo } from "@/components/demo-provider"
+import { ApprovalSummary } from "@/components/application-summary"
+import { useApplication } from "@/components/application-provider"
+import { useSignedInUser } from "@/components/session-provider"
 import { HistoryTable } from "@/components/history-table"
-import { currentApproval } from "@/lib/demo-data"
 
-/** Compose option B's application page from the currently selected sample records. */
+/** Display the service's history and its separately supplied approved discount. */
 export function ApplicationView({ applicationId }: { applicationId: number }) {
-  const { requests, user } = useDemo()
-  const history = requests.filter(
-    (request) => request.application_id === applicationId
-  )
-  const approval = currentApproval(history)
-  const pending = history.find((request) => request.status === "PENDING")
-  const reviewer = user.role === "Reviewer"
-
+  const { requests, approval } = useApplication()
+  const user = useSignedInUser()
   return (
     <div className="stack">
       <ApprovalSummary applicationId={applicationId} approval={approval} />
-      <NextTask
-        applicationId={applicationId}
-        pending={pending}
-        approval={approval}
-        reviewer={reviewer}
-      />
       <HistoryTable
         applicationId={applicationId}
-        requests={history}
-        approvalId={approval?.id}
-        reviewer={reviewer}
+        requests={requests}
+        approvalId={approval?.request_id}
+        reviewer={user.role === "REVIEWER"}
       />
     </div>
   )

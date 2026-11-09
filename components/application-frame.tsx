@@ -3,12 +3,11 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
-
-import { useDemo } from "@/components/demo-provider"
+import { useApplication } from "@/components/application-provider"
+import { useSignedInUser } from "@/components/session-provider"
 import { Button } from "@/components/ui/button"
-import { isDemoApplication } from "@/lib/demo-data"
 
-/** Keep application identity, navigation and feedback above each focused page. */
+/** Keep the application heading and ordinary loading, refresh and error controls together. */
 export function ApplicationFrame({
   applicationId,
   children,
@@ -16,57 +15,54 @@ export function ApplicationFrame({
   applicationId: number
   children: ReactNode
 }) {
-  const { user, notice, refresh, clearNotice } = useDemo()
-  const pathname = usePathname()
-  const exists = isDemoApplication(applicationId)
+  const user = useSignedInUser()
+  const { loading, loaded, error, reload, notify } = useApplication()
+  const overview = usePathname() === `/applications/${applicationId}`
+
+  /** Announce refresh only after both service reads have succeeded. */
+  async function refresh() {
+    if (await reload()) notify("Records refreshed")
+  }
 
   return (
     <>
       <div className="app-context">
-        <div>
-          <p className="eyebrow">MORTGAGE APPLICATION</p>
-          <h1>Application {applicationId}</h1>
-          <p className="muted small">
-            User {user.id} · {user.role}
-          </p>
-        </div>
+        <h1>Application {applicationId}</h1>
         <div className="context-actions">
-          <Link className="button" href="/applications" onClick={clearNotice}>
-            Change application
-          </Link>
-          <Button onClick={() => refresh(pathname)} disabled={!exists}>
-            Refresh
+          <Button onClick={refresh} disabled={loading}>
+            {loading ? "Loading…" : "Refresh"}
           </Button>
-          {user.role === "Relationship manager" && exists && (
-            <Link
-              className="button primary"
-              href={`/applications/${applicationId}/requests/new`}
-              onClick={clearNotice}
-            >
-              + New request
-            </Link>
-          )}
+          {user.role === "RELATIONSHIP_MANAGER" &&
+            overview &&
+            loaded &&
+            !error && (
+              <Link
+                className="button primary"
+                href={`/applications/${applicationId}/requests/new`}
+              >
+                New request
+              </Link>
+            )}
         </div>
       </div>
-      {notice?.path === pathname && exists && (
-        <div className="notice success" role="status">
-          <strong>{notice.title}</strong>
-          <p>{notice.message}</p>
-        </div>
-      )}
-      {exists ? (
-        children
-      ) : (
+      {error ? (
         <section className="card empty" role="alert">
-          <h2>Application not found</h2>
-          <p>
-            We couldn’t find application {applicationId}. Check the ID and try
-            again.
-          </p>
-          <Link className="button primary" href="/applications">
-            Change application
-          </Link>
+          <h2>
+            {error.status === 404
+              ? "Application not found"
+              : "Could not load application"}
+          </h2>
+          <p>{error.message}</p>
+          <Button onClick={reload} disabled={loading}>
+            Try again
+          </Button>
         </section>
+      ) : !loaded ? (
+        <p className="muted small" role="status">
+          Loading application…
+        </p>
+      ) : (
+        children
       )}
     </>
   )

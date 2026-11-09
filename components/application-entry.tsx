@@ -1,71 +1,87 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useState, type FormEvent } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
+import { useSignedInUser } from "@/components/session-provider"
 import { Button } from "@/components/ui/button"
+import { getApplications } from "@/lib/api"
 
-/** Open a sample application through the approved, labelled entry screen. */
+/** Load the signed-in user's application choices and open a selected overview. */
 export function ApplicationEntry() {
-  const router = useRouter()
-  const [value, setValue] = useState("")
+  const user = useSignedInUser()
+  const [applicationIds, setApplicationIds] = useState<number[]>([])
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const activeRead = useRef<AbortController | null>(null)
 
-  /** Validate the entered ID before navigating to its application page. */
-  function openApplication(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const id = Number(value)
-    if (!Number.isSafeInteger(id) || id <= 0) {
-      setError("Enter a positive whole-number application ID.")
-      event.currentTarget.querySelector("input")?.focus()
-      return
-    }
-    router.push(`/applications/${id}`)
+  /** Load current IDs, keeping failed reads distinct from a successful empty list. */
+  const loadApplications = useCallback(
+    async function loadApplications() {
+      activeRead.current?.abort()
+      const controller = new AbortController()
+      activeRead.current = controller
+      setLoading(true)
+      setError("")
+      try {
+        const ids = await getApplications(user.id, controller.signal)
+        if (!controller.signal.aborted) setApplicationIds(ids)
+      } catch (failure) {
+        if (!controller.signal.aborted) {
+          setError(
+            failure instanceof Error
+              ? failure.message
+              : "Applications could not be loaded. Try again."
+          )
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    },
+    [user.id]
+  )
+
+  useEffect(() => {
+    // Read the external list on entry; cancel it when leaving this user's screen.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadApplications()
+    return () => activeRead.current?.abort()
+  }, [loadApplications])
+
+  let content
+  if (loading) {
+    content = <p role="status">Loading applications…</p>
+  } else if (error) {
+    content = (
+      <div role="alert">
+        <p>{error}</p>
+        <Button onClick={loadApplications}>Try again</Button>
+      </div>
+    )
+  } else if (applicationIds.length === 0) {
+    content = <p role="status">No applications available.</p>
+  } else {
+    content = (
+      <ul className="application-list">
+        {applicationIds.map((id) => (
+          <li key={id}>
+            <Link href={`/applications/${id}`}>Application {id}</Link>
+          </li>
+        ))}
+      </ul>
+    )
   }
 
   return (
     <section className="entry card">
-      <p className="eyebrow">PRICING EXCEPTIONS</p>
       <h1>Open an application</h1>
-      <p>
-        Enter the mortgage application ID to view its requests or start a new
-        one.
-      </p>
-      <form onSubmit={openApplication} noValidate>
-        <div className="form-field">
-          <label htmlFor="application-id">Application ID</label>
-          <input
-            id="application-id"
-            inputMode="numeric"
-            placeholder="e.g. 1"
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-            aria-invalid={Boolean(error)}
-            aria-describedby={`application-help${error ? " application-error" : ""}`}
-          />
-          <small id="application-help">
-            Use the ID from the existing mortgage application.
-          </small>
-          {error && (
-            <small id="application-error" className="field-error" role="alert">
-              {error}
-            </small>
-          )}
-        </div>
-        <Button type="submit" variant="primary">
-          Open application →
-        </Button>
-      </form>
-      <div className="sample-links">
-        <span>Local demonstration examples</span>
-        <Link className="button text-button" href="/applications/1">
-          Application 1
-        </Link>
-        <Link className="button text-button" href="/applications/2">
-          Application 2
-        </Link>
-      </div>
+      <section
+        className="application-options"
+        aria-labelledby="available-applications"
+      >
+        <h2 id="available-applications">Available applications</h2>
+        {content}
+      </section>
     </section>
   )
 }

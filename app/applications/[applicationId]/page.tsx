@@ -1,6 +1,6 @@
 import { ApplicationView } from "@/components/application-view"
 
-/** Show the selected sample application's approval, next task and history. */
+/** Show the selected application’s saved approval and history. */
 export default async function ApplicationPage({
   params,
 }: {

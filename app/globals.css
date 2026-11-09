@@ -4,7 +4,7 @@
 @source "../app";
 @source "../components";
 
-/* Approved option B styles. Omit preflight to preserve the original rendering. */
+/* Option B palette and controls, with the approved compact workspace refinements. */
 :root {
   color-scheme: light;
   --ink: #172c3e;
@@ -167,8 +167,19 @@ button:hover:not(:disabled),
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 40px;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 6px;
+  color: #fff;
+  text-decoration: none;
+}
+.brand:hover,
+.brand:focus-visible {
+  background: #25445e;
 }
 .brand-mark {
+  flex-shrink: 0;
   width: 30px;
   height: 30px;
   display: grid;
@@ -181,32 +192,42 @@ button:hover:not(:disabled),
   display: block;
   font-size: 15px;
   font-weight: 650;
+  overflow-wrap: anywhere;
 }
 .brand small {
   display: block;
   color: #bfd0df;
   font-size: 11px;
 }
-.identity {
+.session-nav {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  font-size: 13px;
 }
-.identity label {
-  color: #d3e0eb;
-  font-size: 11px;
-}
-.identity select {
+.session-nav a {
   color: #fff;
-  background: #25445e;
-  border-color: #516a7e;
-  width: 245px;
-  font-size: 12px;
-  min-height: 35px;
+  text-decoration: none;
 }
-.identity select option {
-  background: #fff;
-  color: var(--ink);
+.session-nav a:hover {
+  text-decoration: underline;
+}
+.identity {
+  color: #d3e0eb;
+  font-size: 12px;
+}
+.sign-out {
+  color: #fff;
+  background: transparent;
+  border-color: #516a7e;
+}
+.sign-out:hover:not(:disabled) {
+  background: #25445e;
+}
+.session-error {
+  flex-basis: 100%;
+  color: #ffd7d7;
 }
 .app-main {
   max-width: 1220px;
@@ -218,22 +239,18 @@ button:hover:not(:disabled),
 }
 .app-context {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 22px;
 }
 .app-context h1 {
-  margin-top: 5px;
-}
-.app-context p {
-  margin-top: 7px;
+  font-size: 26px;
 }
 .app-context .context-actions {
   display: flex;
   gap: 10px;
-  padding-top: 8px;
 }
 .card {
   background: #fff;
@@ -258,57 +275,15 @@ button:hover:not(:disabled),
 .approval {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  gap: 8px 18px;
   flex-wrap: wrap;
-  padding: 22px 26px;
+  padding: 16px 24px;
 }
-.approval-value {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  flex-wrap: wrap;
+.approval strong {
+  font-size: 18px;
 }
-.approval-value strong {
-  font-size: 32px;
-  line-height: 1.25;
-  letter-spacing: -1px;
-}
-.approval-value span {
-  color: var(--muted);
+.approval a {
   font-size: 13px;
-}
-.approval .eyebrow {
-  margin-bottom: 6px;
-}
-.approval-side {
-  font-size: 13px;
-  text-align: right;
-}
-.approval-side p {
-  color: var(--muted);
-  margin-bottom: 3px;
-}
-.next-task {
-  padding: 24px 26px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 20px;
-  background: #f0f5fc;
-  border: 1px solid #d4e2f5;
-  border-left: 4px solid var(--blue);
-  border-radius: var(--radius);
-}
-.next-task h2 {
-  font-size: 19px;
-  margin: 5px 0;
-}
-.next-task p {
-  color: #496078;
-  max-width: 620px;
-  font-size: 14px;
 }
 .badge {
   display: inline-flex;
@@ -374,12 +349,6 @@ td small {
   font-size: 11px;
   margin-top: 4px;
 }
-.history-note {
-  padding: 13px 24px;
-  font-size: 12px;
-  color: var(--muted);
-  border-top: 1px solid var(--line);
-}
 .breadcrumb {
   display: flex;
   align-items: center;
@@ -406,7 +375,7 @@ td small {
   margin: 6px 0 8px;
 }
 .request-value {
-  font-size: 38px;
+  font-size: 26px;
   font-weight: 650;
   letter-spacing: -1px;
   margin: 5px 0 2px;
@@ -470,7 +439,7 @@ td small {
   font-size: 14px;
 }
 .context-card strong {
-  font-size: 27px;
+  font-size: 20px;
 }
 .context-card p {
   font-size: 12px;
@@ -496,7 +465,7 @@ td small {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #94abc2;
+  background: #8b98a4;
 }
 .activity li:last-child {
   padding-bottom: 0;
@@ -504,8 +473,21 @@ td small {
 .activity li strong {
   font-size: 12px;
   font-weight: 650;
+  color: var(--muted);
 }
-.activity span {
+.activity-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.activity .activity-latest strong {
+  color: var(--blue);
+}
+.activity .activity-latest::before {
+  background: var(--blue);
+}
+.activity time {
   display: block;
   font-size: 11px;
   color: var(--muted);
@@ -561,20 +543,6 @@ textarea {
 .discount-input input {
   width: 155px;
 }
-.form-context {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 12px 15px;
-  font-size: 13px;
-  background: #f8fafc;
-}
-.form-context span {
-  color: var(--muted);
-}
 .form-footer {
   border-top: 1px solid var(--line);
   padding-top: 22px;
@@ -589,7 +557,7 @@ textarea {
   font-size: 12px;
 }
 .notice {
-  padding: 16px 20px;
+  padding: 12px 16px;
   border-radius: 7px;
   border: 1px solid #d3dfe9;
   background: #eef4fa;
@@ -598,7 +566,6 @@ textarea {
 }
 .notice strong {
   display: block;
-  margin-bottom: 4px;
 }
 .notice p {
   margin-top: 5px;
@@ -613,10 +580,32 @@ textarea {
   border-color: #e9bbbb;
   color: #892f36;
 }
-.notice.success {
+.success-toast {
+  position: fixed;
+  z-index: 50;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: calc(100vw - 32px);
+  padding: 10px 12px 10px 18px;
+  border: 1px solid #bcdcc9;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgb(23 44 62 / 12%);
+  font-size: 13px;
   background: #edf8f1;
-  border-color: #bcdcc9;
   color: #225e42;
+}
+.toast-dismiss {
+  min-height: 32px;
+  width: 32px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 20px;
 }
 .notice .row {
   margin-top: 12px;
@@ -628,8 +617,7 @@ textarea {
   border-color: #b23740;
 }
 .empty {
-  text-align: center;
-  padding: 60px 25px;
+  padding: 28px 24px;
 }
 .empty h2 {
   margin-bottom: 10px;
@@ -637,15 +625,19 @@ textarea {
 .empty p {
   color: var(--muted);
   max-width: 470px;
-  margin: 0 auto 22px;
+  margin-bottom: 16px;
+}
+.empty p:last-child {
+  margin-bottom: 0;
 }
 .entry {
-  max-width: 620px;
+  max-width: 480px;
   margin: 50px auto;
   padding: 36px;
 }
 .entry h1 {
-  margin: 9px 0 14px;
+  margin-bottom: 20px;
+  font-size: 25px;
 }
 .entry p {
   color: var(--muted);
@@ -653,27 +645,30 @@ textarea {
 .entry .form-field {
   margin-top: 25px;
 }
-.sample-links {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-  padding-top: 18px;
+.application-options h2 {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.application-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.application-list li + li {
   border-top: 1px solid var(--line);
 }
-.sample-links span {
-  flex-basis: 100%;
-  color: var(--muted);
-  font-size: 12px;
+.application-list a {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
 }
-.app-footer {
-  margin-top: 28px;
-  color: var(--muted);
-  font-size: 11px;
-  display: flex;
-  justify-content: space-between;
-  gap: 15px;
-  flex-wrap: wrap;
+.application-list a:hover {
+  background: #f2f5f8;
 }
 .loading-line {
   height: 12px;
@@ -706,12 +701,16 @@ textarea {
     padding: 16px 20px;
     gap: 16px;
   }
-  .identity {
-    flex-wrap: wrap;
-    gap: 6px;
+  .session-nav {
+    width: 100%;
+    gap: 10px 16px;
   }
-  .identity select {
-    width: 230px;
+  .identity {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .session-nav .sign-out {
+    margin-left: auto;
   }
   .app-main {
     padding: 22px 16px 40px;
@@ -723,12 +722,8 @@ textarea {
     font-size: 12px;
     padding: 7px 10px;
   }
-  .approval,
-  .next-task {
-    padding: 20px;
-  }
-  .approval-side {
-    text-align: left;
+  .approval {
+    padding: 16px 20px;
   }
   .detail-layout {
     grid-template-columns: 1fr;
@@ -753,8 +748,5 @@ textarea {
   }
   .table-wrap .secondary-column {
     display: none;
-  }
-  .form-context {
-    display: grid;
   }
 }

@@ -1,48 +1,58 @@
 "use client"
 
-import { usePathname, useRouter } from "next/navigation"
-import type { ChangeEvent } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
-import { useDemo } from "@/components/demo-provider"
-import { demoUsers } from "@/lib/demo-users"
+import { useSession } from "@/components/session-provider"
+import { Button } from "@/components/ui/button"
+import { formatRole } from "@/lib/format"
 
-/** Render option B's shared masthead and compact demonstration identity control. */
+/** Show the linked application name, navigation and fixed signed-in identity. */
 export function AppHeader() {
-  const { user, selectUser } = useDemo()
-  const pathname = usePathname()
+  const { user, signOut } = useSession()
   const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
 
-  /** Switch roles and leave the manager form when selecting a reviewer. */
-  function changeIdentity(event: ChangeEvent<HTMLSelectElement>) {
-    const id = Number(event.target.value)
-    selectUser(id)
-    if (id > 2 && pathname.endsWith("/requests/new")) {
-      router.replace(pathname.replace(/\/requests\/new$/, ""))
-    }
+  /** Report a failed sign-out instead of leaving a retained session unnoticed. */
+  function endSession() {
+    const failure = signOut()
+    setError(failure)
+    if (!failure) router.replace("/login")
   }
 
   return (
     <header className="app-header">
       <div className="app-header-inner">
-        <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
+        <Link
+          className="brand"
+          href={user ? "/applications" : "/login"}
+          aria-label={`Discount requests, Mortgage pricing — ${user ? "Applications" : "Sign in"}`}
+        >
+          <span className="brand-mark" aria-hidden="true">
             ↘
-          </div>
-          <div>
-            <strong>Pricing exceptions</strong>
-            <small>Mortgage applications</small>
-          </div>
-        </div>
-        <div className="identity">
-          <label htmlFor="identity">Demo user</label>
-          <select id="identity" value={user.id} onChange={changeIdentity}>
-            {demoUsers.map((identity) => (
-              <option key={identity.id} value={identity.id}>
-                User {identity.id} · {identity.role}
-              </option>
-            ))}
-          </select>
-        </div>
+          </span>
+          <span>
+            <strong>Discount requests</strong>
+            <small>Mortgage pricing</small>
+          </span>
+        </Link>
+        {user && (
+          <nav className="session-nav" aria-label="Main navigation">
+            <Link href="/applications">Applications</Link>
+            <span className="identity">
+              User {user.id} · {formatRole(user.role)}
+            </span>
+            <Button className="sign-out" onClick={endSession}>
+              Sign out
+            </Button>
+            {error && (
+              <span className="session-error" role="alert">
+                {error}
+              </span>
+            )}
+          </nav>
+        )}
       </div>
     </header>
   )

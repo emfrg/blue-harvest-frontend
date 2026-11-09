@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import type { ReactNode } from "react"
 
+import { ApplicationProvider } from "@/components/application-provider"
 import { ApplicationFrame } from "@/components/application-frame"
 
 /** Keep application context shared across its overview, form and request pages. */
@@ -13,5 +14,9 @@ export default async function ApplicationLayout({
 }) {
   const id = Number((await params).applicationId)
   if (!Number.isSafeInteger(id) || id <= 0) notFound()
-  return <ApplicationFrame applicationId={id}>{children}</ApplicationFrame>
+  return (
+    <ApplicationProvider key={id} applicationId={id}>
+      <ApplicationFrame applicationId={id}>{children}</ApplicationFrame>
+    </ApplicationProvider>
+  )
 }

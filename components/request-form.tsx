@@ -1,75 +1,28 @@
 "use client"
 
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useRef, useState, type FormEvent } from "react"
 
-import { useDemo } from "@/components/demo-provider"
+import { useApplication } from "@/components/application-provider"
+import { useSignedInUser } from "@/components/session-provider"
 import { RequestBreadcrumb, RequestContext } from "@/components/request-context"
 import { Button } from "@/components/ui/button"
-import { currentApproval } from "@/lib/demo-data"
+import { useRequestForm } from "@/hooks/use-request-form"
 
-/** Present option B's form and open the resulting fictional pending request. */
+/** Render the request fields and feedback; the form hook owns validation and submission. */
 export function RequestForm({ applicationId }: { applicationId: number }) {
-  const { user, requests, submit } = useDemo()
-  const router = useRouter()
-  const [discount, setDiscount] = useState("")
-  const [reason, setReason] = useState("")
-  const [errors, setErrors] = useState<{ discount?: string; reason?: string }>(
-    {}
-  )
-  const [rejection, setRejection] = useState<{
-    error: string
-    pendingId?: number
-  } | null>(null)
-  const submitted = useRef(false)
-  const approval = currentApproval(
-    requests.filter((request) => request.application_id === applicationId)
-  )
+  const user = useSignedInUser()
+  const { approval } = useApplication()
+  const form = useRequestForm(applicationId, user.id)
+  let submitLabel = "Submit request"
+  if (form.saving) submitLabel = "Submitting…"
+  else if (form.attempt) submitLabel = "Retry submission"
 
-  /** Keep invalid or rejected inputs intact and navigate only after a local acceptance. */
-  function submitForm(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    if (submitted.current) return
-    const value = Number(discount)
-    const nextErrors = {
-      discount:
-        !Number.isSafeInteger(value) || value <= 0
-          ? "Enter a positive whole number of basis points."
-          : undefined,
-      reason: !reason.trim() ? "Enter a reason for this request." : undefined,
-    }
-    setErrors(nextErrors)
-    setRejection(null)
-    if (nextErrors.discount || nextErrors.reason) {
-      event.currentTarget
-        .querySelector<HTMLInputElement | HTMLTextAreaElement>(
-          nextErrors.discount ? "input" : "textarea"
-        )
-        ?.focus()
-      return
-    }
-    const result = submit({ applicationId, discount: value, reason })
-    if ("error" in result) {
-      setRejection(result)
-      return
-    }
-    submitted.current = true
-    router.push(`/applications/${applicationId}/requests/${result.id}`)
-  }
-
-  if (user.role !== "Relationship manager")
+  if (user.role !== "RELATIONSHIP_MANAGER")
     return (
       <section className="card empty">
-        <h2>Relationship managers submit requests</h2>
-        <p>
-          As a reviewer, you can inspect requests and decide those awaiting
-          review.
-        </p>
-        <Link
-          className="button primary"
-          href={`/applications/${applicationId}`}
-        >
+        <h2>Submission unavailable</h2>
+        <p>Only relationship managers can submit requests.</p>
+        <Link className="button" href={`/applications/${applicationId}`}>
           View requests
         </Link>
       </section>
@@ -77,38 +30,35 @@ export function RequestForm({ applicationId }: { applicationId: number }) {
 
   return (
     <>
-      {rejection && (
-        <div className="notice error" role="alert">
-          <strong>
-            {rejection.pendingId
-              ? "There’s already a pending request"
-              : "Request not submitted"}
-          </strong>
-          <p>{rejection.error}</p>
-          {rejection.pendingId && (
-            <div className="row">
-              <Link
-                className="button"
-                href={`/applications/${applicationId}/requests/${rejection.pendingId}`}
-              >
-                View pending request →
-              </Link>
-            </div>
+      {form.attempt && !form.saving && (
+        <div className="notice warning" role="alert">
+          <strong>Submission not confirmed</strong>
+          <p>
+            {form.blocked
+              ? `An earlier submission belongs to User ${form.attempt.userId} for application ${form.attempt.body.application_id}. Sign in as that user to retry it before starting another request.`
+              : "The service has not confirmed the outcome. Retry the original submission to check it without creating a duplicate."}
+          </p>
+          {form.blocked && (
+            <Link
+              href={`/applications/${form.attempt.body.application_id}/requests/new`}
+            >
+              Open application {form.attempt.body.application_id}
+            </Link>
           )}
+        </div>
+      )}
+      {form.failure && (
+        <div className="notice error" role="alert">
+          <strong>{form.failure}</strong>
         </div>
       )}
       <RequestBreadcrumb applicationId={applicationId} label="New request" />
       <div className="detail-layout">
         <section className="card pad">
           <header className="form-heading">
-            <h2>Request a discount</h2>
-            <p>Give the reviewer the proposed discount and your reason.</p>
+            <h2>New request</h2>
           </header>
-          <div className="form-context">
-            <strong>Application {applicationId}</strong>
-            <span>User {user.id} · Relationship manager</span>
-          </div>
-          <form onSubmit={submitForm} noValidate>
+          <form onSubmit={form.submitForm} noValidate>
             <div className="form-field">
               <label htmlFor="discount">Requested discount</label>
               <div className="discount-input">
@@ -116,19 +66,20 @@ export function RequestForm({ applicationId }: { applicationId: number }) {
                   id="discount"
                   name="discount"
                   inputMode="numeric"
-                  value={discount}
-                  onChange={(event) => setDiscount(event.target.value)}
-                  aria-invalid={Boolean(errors.discount)}
-                  aria-describedby={`discount-hint${errors.discount ? " discount-error" : ""}`}
+                  value={form.discount}
+                  disabled={form.inputsDisabled}
+                  onChange={(event) => form.setDiscount(event.target.value)}
+                  aria-invalid={Boolean(form.errors.discount)}
+                  aria-describedby={`discount-hint${form.errors.discount ? " discount-error" : ""}`}
                 />
                 <span>basis points</span>
               </div>
               <small id="discount-hint">
                 For example, 25 basis points means 0.25 percentage points.
               </small>
-              {errors.discount && (
+              {form.errors.discount && (
                 <small className="field-error" id="discount-error" role="alert">
-                  {errors.discount}
+                  {form.errors.discount}
                 </small>
               )}
             </div>
@@ -137,32 +88,32 @@ export function RequestForm({ applicationId }: { applicationId: number }) {
               <textarea
                 id="reason"
                 name="reason"
-                placeholder="Explain why this discount is needed."
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                aria-invalid={Boolean(errors.reason)}
-                aria-describedby={`reason-hint${errors.reason ? " reason-error" : ""}`}
+                value={form.reason}
+                disabled={form.inputsDisabled}
+                onChange={(event) => form.setReason(event.target.value)}
+                aria-invalid={Boolean(form.errors.reason)}
+                aria-describedby={
+                  form.errors.reason ? "reason-error" : undefined
+                }
               />
-              <small id="reason-hint">
-                This will be shown to the reviewer exactly as entered.
-              </small>
-              {errors.reason && (
+              {form.errors.reason && (
                 <small className="field-error" id="reason-error" role="alert">
-                  {errors.reason}
+                  {form.errors.reason}
                 </small>
               )}
             </div>
             <footer className="form-footer">
-              <Button variant="primary" type="submit">
-                Submit request
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={form.submitDisabled}
+              >
+                {submitLabel}
               </Button>
               <Link className="button" href={`/applications/${applicationId}`}>
                 Back to application
               </Link>
-              <p>
-                Submitted details cannot be edited. A reviewer must decide the
-                request.
-              </p>
+              <p>Submitted details cannot be edited.</p>
             </footer>
           </form>
         </section>

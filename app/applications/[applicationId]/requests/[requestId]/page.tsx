@@ -1,6 +1,6 @@
 import { RequestView } from "@/components/request-view"
 
-/** Show one sample request within its own application. */
+/** Show one saved request within its own application. */
 export default async function RequestPage({
   params,
 }: {
